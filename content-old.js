@@ -1,5 +1,7 @@
 document.addEventListener("DOMContentLoaded", function () {
-  const greetingElement = document.querySelector('.cx-MuiTypography-root.cx-MuiTypography-h1.cx-MuiTypography-noWrap');
+  const greetingElement = document.querySelector(
+    ".cx-MuiTypography-root.cx-MuiTypography-h1.cx-MuiTypography-noWrap"
+  );
 
   if (greetingElement) {
     greetingElement.textContent = "EXTENSION LOADED";

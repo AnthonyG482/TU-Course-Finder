@@ -11,37 +11,27 @@
     "48": "icon48.png",
     "128": "icon128.png"
   },
-<<<<<<< HEAD
-  "content_scripts": [
-    {
-      "matches": ["https://csprd.towson.edu/*"],
-      "js": ["content.js"]
-    }
-  ],
-  "permissions": ["activeTab"],
-=======
   "host_permissions": [
-    "https://maintowsonwebsite.com/*"
+    "https://csprd.towson.edu/*"
   ],
   "content_scripts": [
     {
       "matches": [
-        "https://maintowsonwebsite.com/*",
-        "!https://maintowsonwebsite.com/calendar"
+        "https://csprd.towson.edu/*",
+        "!https://csprd.towson.edu/calendar"
       ],
       "js": ["content.js"],
       "css": ["styles.css"]
     },
     {
-      "matches": ["https://another-example.com/*"],
-      "js": ["adifferent-script.js"]
+      "matches": ["https://calendar.google.com/*"],
+      "js": ["googlecal.js"]
     },
     {
-      "matches": ["https://maintowsonwebsite.com/calendar"],
+      "matches": ["https://csprd.towson.edu/calendar"],
       "js": ["calendar-script.js"]
     }
   ],
->>>>>>> 891415ea37a67cb8d58c9550f1839f957d6b6a3f
   "action": {
     "default_popup": "popup.html",
     "default_icon": {
