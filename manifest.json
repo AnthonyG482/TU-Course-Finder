@@ -4,24 +4,34 @@
   "version": "0.01",
   "description": "A Chrome Extension to help you locate your courses",
   "permissions": [
-    "activeTab"
+    "activeTab",
+    "contextMenus",
+    "scripting",
+    "geolocation",
+    "storage"
   ],
+  "background": {
+    "service_worker": "background.js"
+  },
   "icons": {
     "16": "icon16.png",
     "48": "icon48.png",
     "128": "icon128.png"
   },
   "host_permissions": [
-    "https://csprd.towson.edu/*"
+    "https://csprd.towson.edu/*",
+    "https://maps.googleapis.com/*",
+    "http://localhost:3000/*"
   ],
   "content_scripts": [
     {
       "matches": [
         "https://csprd.towson.edu/*",
-        "!https://csprd.towson.edu/calendar"
+        "https://csprd.towson.edu/calendar"
       ],
       "js": ["content.js"],
-      "css": ["styles.css"]
+      "css": ["styles.css"],
+      "run_at": "document_end"
     },
     {
       "matches": ["https://calendar.google.com/*"],
