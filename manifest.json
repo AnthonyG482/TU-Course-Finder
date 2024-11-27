@@ -3,51 +3,17 @@
   "name": "TU Course Finder",
   "version": "0.01",
   "description": "A Chrome Extension to help you locate your courses",
-  "permissions": [
-    "activeTab"
-  ],
   "icons": {
     "16": "icon16.png",
     "48": "icon48.png",
     "128": "icon128.png"
   },
-<<<<<<< HEAD
-  "content_scripts": [
-    {
-      "matches": ["https://csprd.towson.edu/*"],
-      "js": ["content.js"]
-    }
-  ],
-  "permissions": ["activeTab"],
-=======
-  "host_permissions": [
-    "https://maintowsonwebsite.com/*"
-  ],
-  "content_scripts": [
-    {
-      "matches": [
-        "https://maintowsonwebsite.com/*",
-        "!https://maintowsonwebsite.com/calendar"
-      ],
-      "js": ["content.js"],
-      "css": ["styles.css"]
-    },
-    {
-      "matches": ["https://another-example.com/*"],
-      "js": ["adifferent-script.js"]
-    },
-    {
-      "matches": ["https://maintowsonwebsite.com/calendar"],
-      "js": ["calendar-script.js"]
-    }
-  ],
->>>>>>> 891415ea37a67cb8d58c9550f1839f957d6b6a3f
+  "permissions": ["scripting"],
+  "host_permissions": ["https://csprd.towson.edu/*"],
+  "background": {
+    "service_worker": "background.js"
+  },
   "action": {
-    "default_popup": "popup.html",
-    "default_icon": {
-      "16": "icon16.png",
-      "48": "icon48.png",
-      "128": "icon128.png"
-    }
+    "default_title": "Modify Towson Text"
   }
 }
