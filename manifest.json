@@ -43,6 +43,7 @@
     }
   ],
   "action": {
+    "default_title": "Modify Towson Text",
     "default_popup": "popup.html",
     "default_icon": {
       "16": "icon16.png",
