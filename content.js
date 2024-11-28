@@ -23,7 +23,11 @@ function injectMapLink(url) {
   chrome.runtime.sendMessage({ action: 'storeLink', url: url });
 }
 function modifyText() {
-  const element = document.querySelector('.cx-MuiTypography-root.cx-MuiTypography-h1.cx-MuiTypography-noWrap');
+  const iframe = document.querySelector("iframe");  // or other nested container
+  const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+  
+  const element = iframeDoc.querySelector("div.cx-MuiTypography-h1");
+
   if (element) {
     console.log("Element found:", element); // Debugging log
     element.textContent = 'EXTENSION LOADED';
