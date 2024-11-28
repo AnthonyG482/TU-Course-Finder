@@ -10,10 +10,15 @@
   },
   "permissions": ["scripting"],
   "host_permissions": ["https://csprd.towson.edu/*"],
-  "background": {
-    "service_worker": "background.js"
-  },
   "action": {
     "default_title": "Modify Towson Text"
+  },
+  "content_scripts": [
+  {
+    "matches": ["*://csprd.towson.edu/*"],
+    "js": ["content.js"],
+    "run_at": "document_idle"
   }
+]
+
 }
