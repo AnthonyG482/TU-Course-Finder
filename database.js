@@ -22,7 +22,7 @@ function openDatabase() {
 }
 
 // Function to add a classroom entry
-function addClassroom(roomNumber, building, floor, door) {
+function addClassroom(roomNumber, building, floor, door, latitude, longitude) {
   return openDatabase().then((db) => {
     const transaction = db.transaction("classrooms", "readwrite");
     const store = transaction.objectStore("classrooms");
@@ -33,6 +33,8 @@ function addClassroom(roomNumber, building, floor, door) {
       building: building,
       floor: floor,
       door: door,
+      latitude: latitude,
+      longitude: longitude,
     };
     
     return new Promise((resolve, reject) => {
