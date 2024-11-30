@@ -17,3 +17,6 @@ EVIL PLAN OF ACTION:
 -figure out how to read text from element(preferably into console to start)
     -then write into database using addClassroom method
         -(you'll need to figure out formatting as well)
+- figure out how to write formatted information into database
+    -(this will either be easy or the biggest headache of my life)
+- read from database and then use that to get google maps links
