@@ -66,7 +66,23 @@ function getClassroom(roomNumber) {
     const transaction = db.transaction("classrooms", "readonly");
     const store = transaction.objectStore("classrooms");
 
-    return store.get(roomNumber);
+    return new Promise((resolve, reject) => {
+      const request = store.get(roomNumber);
+
+      request.onsuccess = () => {
+        if (request.result) {
+          console.log("Classroom retrieved:", request.result);
+          resolve(request.result);
+        } else {
+          console.log("Classroom not found.");
+          resolve(null);
+        }
+      };
+
+      request.onerror = (event) => {
+        console.error("Error retrieving classroom:", event.target.error
+      };
+    });
   });
 }
 
