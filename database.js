@@ -92,15 +92,40 @@ function updateClassroom(roomNumber, updatedData) {
     const transaction = db.transaction("classrooms", "readwrite");
     const store = transaction.objectStore("classrooms");
 
-    store.get(roomNumber).onsuccess = (event) => {
-      const data = event.target.result;
-      if (data) {
-        Object.assign(data, updatedData); // Update fields
-        store.put(data); // Save updated data
-      }
-    };
+    return new Promise((resolve, reject) => {
+      const request = store.get(roomNumber);
 
-    return transaction.complete;
+      request.onsuccess = () => {
+        const data = request.result;
+        if (data) {
+          Object.assign(data, updatedData); // Merge updated data
+          const updateRequest = store.put(data);
+
+          updateRequest.onsuccess = () => {
+            console.log("Classroom updated:", data);
+            resolve(data);
+          };
+
+          updateRequest.onerror = (updateError) => {
+            console.error("Error updating classroom:", updateError);
+            reject(updateError);
+          };
+        } else {
+          console.log("Classroom not found for update.");
+          resolve(null);
+        }
+      };
+
+      request.onerror = (event) => {
+        console.error("Error retrieving classroom for update:", event.target.error);
+        reject(event.target.error);
+      };
+
+      transaction.onerror = (event) => {
+        console.error("Transaction error:", event.target.error);
+        reject(event.target.error);
+      };
+    });
   });
 }
 
