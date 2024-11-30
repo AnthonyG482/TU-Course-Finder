@@ -70,7 +70,14 @@ function observeIframeForChanges() {
   observer.observe(iframeDoc.body, { childList: true, subtree: true });
 }
 
-function modifyIframeElements() {
+let iframeModified = false; // Guard flag for modifyIframeElements
+
+function writeClassesToDB() {
+  if (iframeModified) {
+    console.log("Iframe elements already added to DB, skipping...");
+    return; // Prevent re-execution
+  }
+
   const iframe = document.querySelector("iframe"); // Locate the iframe
   if (!iframe) {
     console.log("Iframe not found.");
@@ -89,22 +96,22 @@ function modifyIframeElements() {
     return;
   }
 
-  // Example: Generate dynamic text for each element
-  const userValues = ["Text for 1st", "Text for 2nd", "Text for 3rd", "Text for 4th"]; // Dynamic values
-  let index = 0;
+  // Mark as modified
+  iframeModified = true;
 
-  elements.forEach((element) => {
-    const newText = userValues[index] || `Default text ${index + 1}`; // Fallback text if not enough values
-    element.textContent = newText; // Modify the element's text
-    console.log(`Modified element ${index + 1} to: ${newText}`);
-    index++;
+  // Iterate through each element
+  elements.forEach((element, index) => {
+    // Print everything inside the element to the console
+    console.log(`Content of element ${index + 1}:`, element.innerHTML);
+
+    // Example modification (optional)
+    // const newText = `Modified text for element ${index + 1}`;
+    // element.textContent = newText; // Modify the element's text
+    // console.log(`Modified element ${index + 1} to: ${newText}`);
   });
+
+  console.log("Iframe elements have been processed.");
 }
-
-
-
-
-
 
 // Observe changes in the DOM
 const observer = new MutationObserver(() => {
@@ -112,7 +119,7 @@ const observer = new MutationObserver(() => {
   modifyText();
   // Call the observer and modify elements
   observeIframeForChanges();
-  modifyIframeElements();
+  writeClassesToDB();
   getDirections();
 });
 
