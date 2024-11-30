@@ -1,0 +1,14 @@
+from the schedules tab, the room number, building, floor, and door are read.
+
+following the format:
+ex. LA2310 CLA Priority Lec Hall
+room number = 2310
+building = CLA or Language Arts Building
+floor = 2 (first digit of number)
+door = ???(i'll figure that out later)
+
+the information is then written to the IndexedDB.
+
+Now, HYPERLINKS HAPPEN. specifically for the classes, the database is read from and then from order of top to bottom, a conditional will be programmed to generate the google maps link based on what building the class will be in.
+
+Now, the SUPER COOL part, when this link is generated, all of the above information will be used in the popup interface, which will show the information about the room number, building, floor, etc. and also a link (or embed if we want the cool factor) of the google maps!
