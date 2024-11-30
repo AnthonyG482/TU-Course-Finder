@@ -1,5 +1,10 @@
 window.onload = function() {
-  const address = '8000 York Rd, Towson, MD 21252';
+  const roomNumber = 'YR202';
+
+  // Fetch the classroom data from IndexedDB using the roomNumber
+  getClassroom(roomNumber).then(classroom => {
+    if (classroom) {
+      const { latitude, longitude } = classroom;
 
   // Get user's geolocation
   navigator.geolocation.getCurrentPosition(function(position) {
@@ -13,7 +18,7 @@ window.onload = function() {
       alert("Error retrieving your location. You can still view the address location on Google Maps.");
 
       // Fallback: Open Google Maps with the address
-      const addressUrl = `https://www.google.com/maps?q=${encodeURIComponent(address)}`;
+      const addressUrl = `https://www.google.com/maps?q=${latitude},${longitude}`;
       injectMapLink(addressUrl);
   });
 };
