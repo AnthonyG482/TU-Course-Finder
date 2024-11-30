@@ -135,8 +135,28 @@ function deleteClassroom(roomNumber) {
     const transaction = db.transaction("classrooms", "readwrite");
     const store = transaction.objectStore("classrooms");
 
-    store.delete(roomNumber);
-    return transaction.complete;
+    return new Promise((resolve, reject) => {
+      const request = store.delete(roomNumber);
+
+      request.onsuccess = () => {
+        console.log(`Classroom with roomNumber ${roomNumber} deleted successfully.`);
+        resolve();
+      };
+
+      request.onerror = (event) => {
+        console.error("Error deleting classroom:", event.target.error);
+        reject(event.target.error);
+      };
+
+      transaction.oncomplete = () => {
+        console.log("Transaction completed for deleting classroom.");
+      };
+
+      transaction.onerror = (event) => {
+        console.error("Transaction error:", event.target.error);
+        reject(event.target.error);
+      };
+    });
   });
 }
 
