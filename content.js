@@ -17,12 +17,12 @@ window.onload = function() {
       console.error('Error getting location:', error);
       alert("Error retrieving your location. You can still view the address location on Google Maps.");
 
-      // Fallback: Open Google Maps with the address
+      // Fallback: Open Google Maps with the classroom's latitude and longitude
       const addressUrl = `https://www.google.com/maps?q=${latitude},${longitude}`;
       injectMapLink(addressUrl);
+    });
   });
 };
-
 // Function to inject the Google Maps link into the page (injects into extension popup for now)
 function injectMapLink(url) {
   chrome.runtime.sendMessage({ action: 'storeLink', url: url });
