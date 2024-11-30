@@ -1,6 +1,4 @@
-function getDirections() {
-  const roomNumber = 'YR202';
-
+function getDirections(roomNumber) {
   // Send the roomNumber to the background script to fetch classroom data
   chrome.runtime.sendMessage({ 
     type: 'getDatabaseData', 
@@ -70,14 +68,7 @@ function observeIframeForChanges() {
   observer.observe(iframeDoc.body, { childList: true, subtree: true });
 }
 
-let iframeModified = false; // Guard flag for modifyIframeElements
-
-function writeClassesToDB() {
-  if (iframeModified) {
-    console.log("Iframe elements already added to DB, skipping...");
-    return; // Prevent re-execution
-  }
-
+function modifyIframeElements() {
   const iframe = document.querySelector("iframe"); // Locate the iframe
   if (!iframe) {
     console.log("Iframe not found.");
@@ -96,22 +87,62 @@ function writeClassesToDB() {
     return;
   }
 
-  // Mark as modified
-  iframeModified = true;
+  // Example: Generate dynamic text for each element
+  const userValues = ["Text for 1st", "Text for 2nd", "Text for 3rd", "Text for 4th"]; // Dynamic values
+  let index = 0;
 
-  // Iterate through each element
-  elements.forEach((element, index) => {
-    // Print everything inside the element to the console
-    console.log(`Content of element ${index + 1}:`, element.innerHTML);
-
-    // Example modification (optional)
-    // const newText = `Modified text for element ${index + 1}`;
-    // element.textContent = newText; // Modify the element's text
-    // console.log(`Modified element ${index + 1} to: ${newText}`);
+  elements.forEach((element) => {
+    const newText = userValues[index] || `Default text ${index + 1}`; // Fallback text if not enough values
+    element.textContent = newText; // Modify the element's text
+    console.log(`Modified element ${index + 1} to: ${newText}`);
+    index++;
   });
-
-  console.log("Iframe elements have been processed.");
 }
+
+function addClassroom(roomNumber, building, floor, door) {
+  chrome.runtime.sendMessage({ 
+    type: 'addDatabaseData', 
+    roomNumber: roomNumber,
+    building: building,
+    floor: floor,
+    door: door
+  }, (response) => {
+    if (response) {
+      console.log(response.classroom)
+    } else {
+      console.error('Failed to add classroom data:', response.error || 'No data');
+    }
+  });
+}
+
+function updateClassroom(roomNumber, updatedData) {
+  chrome.runtime.sendMessage({
+    type: 'updateDatabaseData',
+    roomNumber: roomNumber,
+    updatedData: updatedData
+  }, (response) => {
+    if (response) {
+      console.log("Update: ", response.classroom)
+    } else {
+      console.error('Failed to update classroom data:', response.error || 'No data');
+    }
+  })
+}
+
+function deleteClassroom(roomNumber) {
+  chrome.runtime.sendMessage({
+    type: 'deleteDatabaseData',
+    roomNumber: roomNumber
+  }, (response) => {
+    if (response) {
+      console.log(`Room ${roomNumber} deleted`)
+    } else {
+      console.error('Failed to delete classroom data:', response.error || 'No data');
+    }
+  })
+}
+
+addClassroom("LA202", "LA", 2, 2);
 
 // Observe changes in the DOM
 const observer = new MutationObserver(() => {
@@ -119,8 +150,8 @@ const observer = new MutationObserver(() => {
   modifyText();
   // Call the observer and modify elements
   observeIframeForChanges();
-  writeClassesToDB();
-  getDirections();
+  modifyIframeElements();
+  getDirections('LA202')
 });
 
 observer.observe(document.body, { childList: true, subtree: true });

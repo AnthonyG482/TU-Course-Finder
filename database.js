@@ -2,7 +2,7 @@
 const buildingCoordinates = {
   YR: { latitude: 39.390662816719306, longitude: -76.60596155056368 }, // Example coordinates for YR building
   LA: { latitude: 39.395064926651315, longitude: -76.60914180363292 }, // Example coordinates for LA building
-  // Add other buildings and their respective latitudes and longitudes here
+  SC: { latitude: 39.391498094677644, longitude: -76.60637613336023 }
 };
 
 // Function to open or create the IndexedDB database
@@ -33,7 +33,7 @@ function getBuildingAbbreviation(roomNumber) {
 }
 
 // Function to add a classroom entry
-function addClassroom(roomNumber, building, floor, door) {
+export function addClassroom(roomNumber, building, floor, door) {
   const buildingAbbr = getBuildingAbbreviation(roomNumber); // Get building abbreviation
   const coordinates = buildingCoordinates[buildingAbbr]; // Lookup coordinates from the mapping
 
@@ -42,7 +42,7 @@ function addClassroom(roomNumber, building, floor, door) {
     return; // If no coordinates found, stop the function
   }
 
-  const { latitude, longitude } = coordinates; // Get the coordinates
+  const { latitude, longitude } = coordinates;
 
   return openDatabase().then((db) => {
     const transaction = db.transaction("classrooms", "readwrite");
@@ -58,22 +58,21 @@ function addClassroom(roomNumber, building, floor, door) {
       longitude: longitude,
     };
 
-    // Adding classroom to the IndexedDB
     return new Promise((resolve, reject) => {
-      const request = store.add(classroom);
+      const request = store.put(classroom);
 
       request.onsuccess = () => {
-        console.log("Classroom added:", classroom);
+        console.log("Classroom added or updated:", classroom);
         resolve(classroom);
       };
 
       request.onerror = (event) => {
-        console.error("Error adding classroom:", event.target.error);
+        console.error("Error adding or updating classroom:", event.target.error);
         reject(event.target.error);
       };
 
       transaction.oncomplete = () => {
-        console.log("Transaction completed for adding classroom");
+        console.log("Transaction completed for adding or updating classroom");
       };
 
       transaction.onerror = (event) => {
@@ -81,28 +80,25 @@ function addClassroom(roomNumber, building, floor, door) {
         reject(event.target.error);
       };
     });
+  }).catch((error) => {
+    console.error("Database operation failed:", error);
   });
 }
 
+
 // Function to retrieve a classroom entry
-export default function getClassroom(roomNumber) {
+export function getClassroom(roomNumber) {
   return openDatabase().then((db) => {
-    
+    if (!roomNumber) {
+      console.error("Room number is required.");
+      return Promise.reject("Room number is required.");
+    }
+
     const transaction = db.transaction("classrooms", "readonly");
     const store = transaction.objectStore("classrooms");
-    const getAllRequest = store.getAll();
-
-    getAllRequest.onsuccess = function(event) {
-      console.log("Success", event.target.result);  // Logs the entire dataset
-    };
-
-    getAllRequest.onerror = function(event) {
-      console.error('Error fetching data from IndexedDB', event);
-    }; // Logs the entire dataset
+    const request = store.get(roomNumber);
 
     return new Promise((resolve, reject) => {
-      const request = store.get(roomNumber);
-
       request.onsuccess = () => {
         if (request.result) {
           console.log("Classroom retrieved:", request.result);
@@ -122,7 +118,7 @@ export default function getClassroom(roomNumber) {
 }
 
 // Function to update a classroom entry
-function updateClassroom(roomNumber, updatedData) {
+export function updateClassroom(roomNumber, updatedData) {
   return openDatabase().then((db) => {
     const transaction = db.transaction("classrooms", "readwrite");
     const store = transaction.objectStore("classrooms");
@@ -133,18 +129,27 @@ function updateClassroom(roomNumber, updatedData) {
       request.onsuccess = () => {
         const data = request.result;
         if (data) {
-          Object.assign(data, updatedData); // Merge updated data
-          const updateRequest = store.put(data);
+          console.log("Before update:", data); // Log before updating
+          console.log("Updated data:", updatedData); // Log updated data
 
-          updateRequest.onsuccess = () => {
-            console.log("Classroom updated:", data);
-            resolve(data);
-          };
+          // Check if updatedData is an object (not an array)
+          if (typeof updatedData === "object" && !Array.isArray(updatedData)) {
+            Object.assign(data, updatedData); // Merge updated data
+            const updateRequest = store.put(data);
 
-          updateRequest.onerror = (updateError) => {
-            console.error("Error updating classroom:", updateError);
-            reject(updateError);
-          };
+            updateRequest.onsuccess = () => {
+              console.log("Classroom updated:", data);
+              resolve(data);
+            };
+
+            updateRequest.onerror = (updateError) => {
+              console.error("Error updating classroom:", updateError);
+              reject(updateError);
+            };
+          } else {
+            console.error("Updated data must be an object, not an array.");
+            reject("Updated data is not a valid object");
+          }
         } else {
           console.log("Classroom not found for update.");
           resolve(null);
@@ -164,8 +169,9 @@ function updateClassroom(roomNumber, updatedData) {
   });
 }
 
+
 // Function to delete a classroom entry
-function deleteClassroom(roomNumber) {
+export function deleteClassroom(roomNumber) {
   return openDatabase().then((db) => {
     const transaction = db.transaction("classrooms", "readwrite");
     const store = transaction.objectStore("classrooms");
@@ -175,11 +181,20 @@ function deleteClassroom(roomNumber) {
 
       request.onsuccess = () => {
         console.log(`Classroom with roomNumber ${roomNumber} deleted successfully.`);
-        resolve();
       };
 
       request.onerror = (event) => {
         console.error("Error deleting classroom:", event.target.error);
+        reject(event.target.error);
+      };
+
+      getAllRequest.onsuccess = () => {
+        console.log(`${roomNumber} deleted`);
+        resolve();
+      };
+
+      getAllRequest.onerror = (event) => {
+        console.error("Error fetching classrooms:", event.target.error);
         reject(event.target.error);
       };
 
@@ -195,10 +210,3 @@ function deleteClassroom(roomNumber) {
   });
 }
 
-addClassroom("YR202", "YR", 2, 2)
-  .then(() => {
-    return getClassroom("YR202");  // Attempt to retrieve the classroom we just added
-  })
-  .catch((err) => {
-    console.error("Error:", err);
-  });
