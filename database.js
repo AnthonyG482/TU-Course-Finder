@@ -34,9 +34,29 @@ function addClassroom(roomNumber, building, floor, door) {
       floor: floor,
       door: door,
     };
+    
+    return new Promise((resolve, reject) => {
+      const request = store.add(classroom);
 
-    store.add(classroom);
-    return transaction.complete;
+      request.onsuccess = () => {
+        console.log("Classroom added:", classroom);
+        resolve(classroom);
+      };
+
+      request.onerror = (event) => {
+        console.error("Error adding classroom:", event.target.error):
+        reject(event.target.error);
+      };
+
+      transaction.oncomplete = () => {
+        console.log("Transaction completed for adding classroom");
+      };
+
+      transaction.onerror = (event) => {
+        console.error("Transaction error:", event.target.error);
+        reject(event.target.error);
+      };
+    });
   });
 }
 
