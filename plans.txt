@@ -12,3 +12,8 @@ the information is then written to the IndexedDB.
 Now, HYPERLINKS HAPPEN. specifically for the classes, the database is read from and then from order of top to bottom, a conditional will be programmed to generate the google maps link based on what building the class will be in.
 
 Now, the SUPER COOL part, when this link is generated, all of the above information will be used in the popup interface, which will show the information about the room number, building, floor, etc. and also a link (or embed if we want the cool factor) of the google maps!
+
+EVIL PLAN OF ACTION:
+-figure out how to read text from element(preferably into console to start)
+    -then write into database using addClassroom method
+        -(you'll need to figure out formatting as well)
