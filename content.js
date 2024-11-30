@@ -36,10 +36,70 @@ function modifyText() {
   }
 }
 
+function observeIframeForChanges() {
+  const iframe = document.querySelector("iframe");
+  if (!iframe) {
+    console.log("Iframe not found.");
+    return;
+  }
+
+  const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+  if (!iframeDoc) {
+    console.log("Iframe document not loaded yet.");
+    return;
+  }
+
+  const observer = new MutationObserver(() => {
+    modifyIframeElements(); // Re-run the modification function whenever changes occur
+  });
+
+  // Start observing the body of the iframe
+  observer.observe(iframeDoc.body, { childList: true, subtree: true });
+}
+
+function modifyIframeElements() {
+  const iframe = document.querySelector("iframe"); // Locate the iframe
+  if (!iframe) {
+    console.log("Iframe not found.");
+    return;
+  }
+
+  const iframeDoc = iframe.contentDocument || iframe.contentWindow.document; // Access the iframe's document
+  if (!iframeDoc) {
+    console.log("Iframe document not loaded yet.");
+    return;
+  }
+
+  const elements = iframeDoc.querySelectorAll("p.cx-MuiTypography-body2"); // Select all elements with the target class
+  if (elements.length === 0) {
+    console.log("No target elements found in the iframe.");
+    return;
+  }
+
+  // Example: Generate dynamic text for each element
+  const userValues = ["Text for 1st", "Text for 2nd", "Text for 3rd", "Text for 4th"]; // Dynamic values
+  let index = 0;
+
+  elements.forEach((element) => {
+    const newText = userValues[index] || `Default text ${index + 1}`; // Fallback text if not enough values
+    element.textContent = newText; // Modify the element's text
+    console.log(`Modified element ${index + 1} to: ${newText}`);
+    index++;
+  });
+}
+
+
+
+
+
+
 // Observe changes in the DOM
 const observer = new MutationObserver(() => {
   console.log("DOM mutation detected, attempting to modify text."); // Debugging log
   modifyText();
+  // Call the observer and modify elements
+  observeIframeForChanges();
+  modifyIframeElements();
 });
 
 observer.observe(document.body, { childList: true, subtree: true });
@@ -47,3 +107,6 @@ console.log("Content script loaded and observer initialized."); // Debugging log
 
 // Initial check
 modifyText();
+// Call the observer and modify elements
+observeIframeForChanges();
+modifyIframeElements();
