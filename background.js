@@ -1,9 +1,23 @@
+import getClassroom from "./database.js";
+
 let storedLink = null;
 
 // Listen for messages from the content script
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
     if (request.action === 'storeLink') {
         storedLink = request.url;  // Store the link
+    }
+
+    if (request.type === 'getDatabaseData') {
+        const roomNumber = request.roomNumber;
+        getClassroom(roomNumber).then((classroom) => {
+            sendResponse({ classroom });
+        })
+        .catch((error) => {
+            sendResponse({ error: error.message });
+        });
+
+        return true;
     }
 });
 
@@ -16,8 +30,6 @@ chrome.runtime.onConnect.addListener(function(port) {
     });
 });
 
-
-
 chrome.runtime.onInstalled.addListener(() => {
   chrome.scripting.registerContentScripts([{
     id: "modifyTowsonText",
@@ -26,3 +38,4 @@ chrome.runtime.onInstalled.addListener(() => {
     runAt: "document_idle"
   }]);
 });
+

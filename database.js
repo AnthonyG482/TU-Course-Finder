@@ -85,10 +85,20 @@ function addClassroom(roomNumber, building, floor, door) {
 }
 
 // Function to retrieve a classroom entry
-function getClassroom(roomNumber) {
+export default function getClassroom(roomNumber) {
   return openDatabase().then((db) => {
+    
     const transaction = db.transaction("classrooms", "readonly");
     const store = transaction.objectStore("classrooms");
+    const getAllRequest = store.getAll();
+
+    getAllRequest.onsuccess = function(event) {
+      console.log("Success", event.target.result);  // Logs the entire dataset
+    };
+
+    getAllRequest.onerror = function(event) {
+      console.error('Error fetching data from IndexedDB', event);
+    }; // Logs the entire dataset
 
     return new Promise((resolve, reject) => {
       const request = store.get(roomNumber);
@@ -185,11 +195,10 @@ function deleteClassroom(roomNumber) {
   });
 }
 
-// Export all functions
-export {
-  openDatabase,
-  addClassroom,
-  getClassroom,
-  updateClassroom,
-  deleteClassroom,
-};
+addClassroom("YR202", "YR", 2, 2)
+  .then(() => {
+    return getClassroom("YR202");  // Attempt to retrieve the classroom we just added
+  })
+  .catch((err) => {
+    console.error("Error:", err);
+  });
