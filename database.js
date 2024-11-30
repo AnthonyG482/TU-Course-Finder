@@ -44,7 +44,7 @@ function addClassroom(roomNumber, building, floor, door) {
       };
 
       request.onerror = (event) => {
-        console.error("Error adding classroom:", event.target.error):
+        console.error("Error adding classroom:", event.target.error);
         reject(event.target.error);
       };
 
@@ -80,8 +80,8 @@ function getClassroom(roomNumber) {
       };
 
       request.onerror = (event) => {
-        console.error("Error retrieving classroom:", event.target.error
-      };
+        console.error("Error retrieving classroom:", event.target.error)
+      }
     });
   });
 }
