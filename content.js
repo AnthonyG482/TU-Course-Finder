@@ -1,30 +1,33 @@
-function getDirections(roomNumber) {
-  // Send the roomNumber to the background script to fetch classroom data
-  chrome.runtime.sendMessage({ 
-    type: 'getDatabaseData', 
-    roomNumber: roomNumber
-  }, (response) => {
-    if (response && response.classroom) {
-      const { latitude, longitude } = response.classroom;
-      
-      // Get user's geolocation
-      navigator.geolocation.getCurrentPosition(function(position) {
-        const userLat = position.coords.latitude;
-        const userLng = position.coords.longitude;
+async function getDirections(roomNumber) {
+  return new Promise((resolve, reject) => {
+      // Send the roomNumber to the background script to fetch classroom data
+      chrome.runtime.sendMessage({
+          type: 'getDatabaseData',
+          roomNumber: roomNumber
+      }, (response) => {
+          if (response && response.classroom) {
+              const { latitude, longitude } = response.classroom;
 
-        const directionsUrl = `https://www.google.com/maps/dir/?api=1&origin=${userLat},${userLng}&destination=${latitude},${longitude}`;
-        injectMapLink(directionsUrl);
-      }, function(error) {
-        console.error('Error getting location:', error);
-        alert("Error retrieving your location. You can still view the address location on Google Maps.");
+              // Get user's geolocation
+              navigator.geolocation.getCurrentPosition(function (position) {
+                  const userLat = position.coords.latitude;
+                  const userLng = position.coords.longitude;
 
-        // Fallback: Open Google Maps with the classroom's latitude and longitude
-        const addressUrl = `https://www.google.com/maps?q=${latitude},${longitude}`;
-        injectMapLink(addressUrl);
+                  const directionsUrl = `https://www.google.com/maps/dir/?api=1&origin=${userLat},${userLng}&destination=${latitude},${longitude}`;
+                  resolve(directionsUrl); // Resolving with the directions URL
+              }, function (error) {
+                  console.error('Error getting location:', error);
+                  alert("Error retrieving your location. You can still view the address location on Google Maps.");
+
+                  // Fallback: Open Google Maps with the classroom's latitude and longitude
+                  const addressUrl = `https://www.google.com/maps?q=${latitude},${longitude}`;
+                  resolve(addressUrl); // Resolving with the fallback address URL
+              });
+          } else {
+              console.warn("No classroom data for room:", roomNumber);
+              reject('Failed to retrieve classroom data');
+          }
       });
-    } else {
-      console.error('Failed to retrieve classroom data:', response.error || 'No data');
-    }
   });
 }
 
@@ -145,10 +148,9 @@ function modifyIframeElements() {
   }
 
   // Modify each element to become a hyperlink
-  elements.forEach((element, index) => {
+  elements.forEach(async (element, index) => {
     // Check if the element already contains an anchor to avoid duplicating hyperlinks
     if (element.querySelector("a")) {
-      console.log(`Element ${index + 1} already contains a hyperlink. Skipping.`);
       return;
     }
 
@@ -156,13 +158,21 @@ function modifyIframeElements() {
     console.log(`Element ${index + 1} content: "${originalText}"`);
 
     const anchor = document.createElement("a"); // Create a new anchor element
-    anchor.href = "https://maps.google.com"; // Set the href to Google Maps
-    anchor.target = "_blank"; // Open the link in a new tab
-    anchor.textContent = originalText; // Use the original text as the link text
-
-    // Replace the original element's content with the anchor
-    element.textContent = ""; // Clear the original text
-    element.appendChild(anchor); // Add the anchor as a child
+    try {
+      const classroom = element.textContent.slice(2,6)
+      console.log(classroom)
+      anchor.href = await getDirections(classroom); // Set the href to Google Maps
+      anchor.target = "_blank"; // Open the link in a new tab
+      anchor.textContent = originalText; // Use the original text as the link text
+  
+  
+      // Replace the original element's content with the anchor
+      element.textContent = ""; // Clear the original text
+      element.appendChild(anchor); // Add the anchor as a child
+    } catch (error) {
+      console.error('Error fetching directions:', error);
+    }
+    
   });
 
   console.log("Script executed successfully.");
@@ -222,7 +232,6 @@ const observer = new MutationObserver(() => {
   observeIframeForChanges();
   writeCoursesToDB();
   modifyIframeElements();
-  getDirections('LA202')
 });
 
 observer.observe(document.body, { childList: true, subtree: true });
