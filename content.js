@@ -60,9 +60,7 @@ function observeIframeForChanges() {
     return;
   }
 
-  const observer = new MutationObserver(() => {
-    writeCoursesToDB; // Re-run the modification function whenever changes occur
-  });
+
 
   // Start observing the body of the iframe
   observer.observe(iframeDoc.body, { childList: true, subtree: true });
@@ -70,7 +68,7 @@ function observeIframeForChanges() {
 
 let hasRun = false; // A flag to ensure the function runs only once
 
-function writeCoursesToDB {
+function writeCoursesToDB(){
   if (hasRun) {
     console.log("Function has already run. Exiting.");
     return; // Exit if the function has already run
@@ -180,15 +178,9 @@ const observer = new MutationObserver(() => {
   modifyText();
   // Call the observer and modify elements
   observeIframeForChanges();
-  writeCoursesToDB;
+  writeCoursesToDB();
   getDirections('LA202')
 });
 
 observer.observe(document.body, { childList: true, subtree: true });
 console.log("Content script loaded and observer initialized."); // Debugging log
-
-// Initial check
-// modifyText();
-// // Call the observer and modify elements
-// observeIframeForChanges();
-// writeCoursesToDB;
