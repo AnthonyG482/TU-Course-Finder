@@ -125,6 +125,48 @@ function writeCoursesToDB(){
   hasRun = true; // Set the flag to indicate the function has run
 }
 
+function modifyIframeElements() {
+  const iframe = document.querySelector("iframe"); // Locate the iframe
+  if (!iframe) {
+    console.log("Iframe not found.");
+    return;
+  }
+
+  const iframeDoc = iframe.contentDocument || iframe.contentWindow.document; // Access the iframe's document
+  if (!iframeDoc) {
+    console.log("Iframe document not loaded yet.");
+    return;
+  }
+
+  const elements = iframeDoc.querySelectorAll("p.cx-MuiTypography-body2"); // Select all elements with the target class
+  if (elements.length === 0) {
+    console.log("No target elements found in the iframe.");
+    return;
+  }
+
+  // Modify each element to become a hyperlink
+  elements.forEach((element, index) => {
+    // Check if the element already contains an anchor to avoid duplicating hyperlinks
+    if (element.querySelector("a")) {
+      console.log(`Element ${index + 1} already contains a hyperlink. Skipping.`);
+      return;
+    }
+
+    const originalText = element.textContent.trim();
+    console.log(`Element ${index + 1} content: "${originalText}"`);
+
+    const anchor = document.createElement("a"); // Create a new anchor element
+    anchor.href = "https://maps.google.com"; // Set the href to Google Maps
+    anchor.target = "_blank"; // Open the link in a new tab
+    anchor.textContent = originalText; // Use the original text as the link text
+
+    // Replace the original element's content with the anchor
+    element.textContent = ""; // Clear the original text
+    element.appendChild(anchor); // Add the anchor as a child
+  });
+
+  console.log("Script executed successfully.");
+}
 
 
 function addClassroom(roomNumber, building, floor, door) {
@@ -179,6 +221,7 @@ const observer = new MutationObserver(() => {
   // Call the observer and modify elements
   observeIframeForChanges();
   writeCoursesToDB();
+  modifyIframeElements();
   getDirections('LA202')
 });
 
