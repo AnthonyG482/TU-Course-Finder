@@ -23,18 +23,25 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 
     if (request.type === 'addDatabaseData') {
         const roomNumber = request.roomNumber;
-        const building = request.building
-        const floor = request.floor 
-        const door = request.door
-
-        addClassroom(roomNumber, building, floor, door).then((classroom) => {
-            sendResponse({ classroom });
-        })
-        .catch((error) => {
-            sendResponse({ error: error.message });
-        });
+        const building = request.building;
+        const floor = request.floor;
+        const door = request.door;
+    
+        console.log(`addDatabaseData called with: ${roomNumber}, ${building}, ${floor}, ${door}`); // Debugging log
+    
+        addClassroom(roomNumber, building, floor, door)
+            .then((classroom) => {
+                console.log("Classroom added successfully:", classroom); // Debugging log
+                sendResponse({ classroom });
+            })
+            .catch((error) => {
+                console.error("Error adding classroom:", error); // Debugging log
+                sendResponse({ error: error.message });
+            });
+    
         return true;
     }
+    
 
     if (request.type === 'updateDatabaseData') {
         const roomNumber = request.roomNumber;

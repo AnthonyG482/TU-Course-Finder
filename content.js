@@ -68,7 +68,14 @@ function observeIframeForChanges() {
   observer.observe(iframeDoc.body, { childList: true, subtree: true });
 }
 
+let hasRun = false; // A flag to ensure the function runs only once
+
 function modifyIframeElements() {
+  if (hasRun) {
+    console.log("Function has already run. Exiting.");
+    return; // Exit if the function has already run
+  }
+
   const iframe = document.querySelector("iframe"); // Locate the iframe
   if (!iframe) {
     console.log("Iframe not found.");
@@ -87,19 +94,43 @@ function modifyIframeElements() {
     return;
   }
 
-  // Example: Generate dynamic text for each element
-  const userValues = ["Text for 1st", "Text for 2nd", "Text for 3rd", "Text for 4th"]; // Dynamic values
-  let index = 0;
+  // Iterate through each element and extract data
+  elements.forEach((element, index) => {
+    const text = element.textContent.trim();
+    console.log(`Element ${index + 1} content: "${text}"`);
 
-  elements.forEach((element) => {
-    const newText = userValues[index] || `Default text ${index + 1}`; // Fallback text if not enough values
-    element.textContent = newText; // Modify the element's text
-    console.log(`Modified element ${index + 1} to: ${newText}`);
-    index++;
+    // Parse the text, e.g., "LA2310 CLA Priority Lec Hall" or "LA0302 CLA Priority Lec Hall"
+    const match = text.match(/^([A-Z]+)(\d+)\s+([A-Z]+)\s+(.*)$/);
+    if (match) {
+      const building = match[1]; // e.g., "LA"
+      const roomNumber = match[2]; // e.g., "2310" or "0302"
+      let floor;
+
+      // Determine the floor based on the room number
+      if (roomNumber.startsWith("0")) {
+        floor = parseInt(roomNumber.charAt(1), 10); // Digit directly after the 0
+      } else {
+        floor = parseInt(roomNumber.charAt(0), 10); // First digit of the room number
+      }
+
+      const door = parseInt(roomNumber.slice(1), 10); // Remaining digits of the room number
+
+      console.log(`Parsed data - Room: ${roomNumber}, Building: ${building}, Floor: ${floor}, Door: ${door}`);
+
+      // Add the classroom to the database
+      addClassroom(roomNumber, building, floor, door);
+    } else {
+      console.log(`Could not parse text: "${text}"`);
+    }
   });
+
+  hasRun = true; // Set the flag to indicate the function has run
 }
 
+
+
 function addClassroom(roomNumber, building, floor, door) {
+  console.log("Sending addDatabaseData message.");
   chrome.runtime.sendMessage({ 
     type: 'addDatabaseData', 
     roomNumber: roomNumber,
@@ -108,12 +139,13 @@ function addClassroom(roomNumber, building, floor, door) {
     door: door
   }, (response) => {
     if (response) {
-      console.log(response.classroom)
+      console.log("Classroom added:", response.classroom);
     } else {
-      console.error('Failed to add classroom data:', response.error || 'No data');
+      console.error('Failed to add classroom data:', response ? response.error : 'No response received');
     }
   });
 }
+
 
 function updateClassroom(roomNumber, updatedData) {
   chrome.runtime.sendMessage({
@@ -141,8 +173,6 @@ function deleteClassroom(roomNumber) {
     }
   })
 }
-
-addClassroom("LA202", "LA", 2, 2);
 
 // Observe changes in the DOM
 const observer = new MutationObserver(() => {

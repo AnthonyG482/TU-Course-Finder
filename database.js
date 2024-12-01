@@ -34,7 +34,7 @@ function getBuildingAbbreviation(roomNumber) {
 
 // Function to add a classroom entry
 export function addClassroom(roomNumber, building, floor, door) {
-  const buildingAbbr = getBuildingAbbreviation(roomNumber); // Get building abbreviation
+  const buildingAbbr = getBuildingAbbreviation(building); // Get building abbreviation
   const coordinates = buildingCoordinates[buildingAbbr]; // Lookup coordinates from the mapping
 
   if (!coordinates) {
