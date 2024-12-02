@@ -1,7 +1,7 @@
 // database.js
 const buildingCoordinates = {
-  YR: { latitude: 39.390662816719306, longitude: -76.60596155056368 }, // Example coordinates for YR building
-  LA: { latitude: 39.395064926651315, longitude: -76.60914180363292 }, // Example coordinates for LA building
+  YR: { latitude: 39.390662816719306, longitude: -76.60596155056368 },
+  LA: { latitude: 39.395064926651315, longitude: -76.60914180363292 },
   SC: { latitude: 39.391498094677644, longitude: -76.60637613336023 }
 };
 
@@ -62,7 +62,6 @@ export function addClassroom(roomNumber, building, floor, door) {
       const request = store.put(classroom);
 
       request.onsuccess = () => {
-        console.log("Classroom added or updated:", classroom);
         resolve(classroom);
       };
 
@@ -72,7 +71,7 @@ export function addClassroom(roomNumber, building, floor, door) {
       };
 
       transaction.oncomplete = () => {
-        console.log("Transaction completed for adding or updating classroom");
+        resolve();
       };
 
       transaction.onerror = (event) => {
@@ -101,10 +100,9 @@ export function getClassroom(roomNumber) {
     return new Promise((resolve, reject) => {
       request.onsuccess = () => {
         if (request.result) {
-          console.log("Classroom retrieved:", request.result);
           resolve(request.result);
         } else {
-          console.log("Classroom not found.");
+          console.error("Classroom not found.");
           resolve(null);
         }
       };
@@ -129,16 +127,12 @@ export function updateClassroom(roomNumber, updatedData) {
       request.onsuccess = () => {
         const data = request.result;
         if (data) {
-          console.log("Before update:", data); // Log before updating
-          console.log("Updated data:", updatedData); // Log updated data
-
           // Check if updatedData is an object (not an array)
           if (typeof updatedData === "object" && !Array.isArray(updatedData)) {
             Object.assign(data, updatedData); // Merge updated data
             const updateRequest = store.put(data);
 
             updateRequest.onsuccess = () => {
-              console.log("Classroom updated:", data);
               resolve(data);
             };
 
@@ -151,7 +145,6 @@ export function updateClassroom(roomNumber, updatedData) {
             reject("Updated data is not a valid object");
           }
         } else {
-          console.log("Classroom not found for update.");
           resolve(null);
         }
       };
@@ -180,7 +173,7 @@ export function deleteClassroom(roomNumber) {
       const request = store.delete(roomNumber);
 
       request.onsuccess = () => {
-        console.log(`Classroom with roomNumber ${roomNumber} deleted successfully.`);
+        resolve();
       };
 
       request.onerror = (event) => {
@@ -189,7 +182,6 @@ export function deleteClassroom(roomNumber) {
       };
 
       getAllRequest.onsuccess = () => {
-        console.log(`${roomNumber} deleted`);
         resolve();
       };
 
@@ -199,7 +191,7 @@ export function deleteClassroom(roomNumber) {
       };
 
       transaction.oncomplete = () => {
-        console.log("Transaction completed for deleting classroom.");
+        resolve();
       };
 
       transaction.onerror = (event) => {

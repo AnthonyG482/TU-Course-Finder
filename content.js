@@ -1,3 +1,56 @@
+/**
+ * TU Course Finder is a Chromium web extension that helps Towson University students locate
+ * their classes using Google Maps. The program observes and manipulates the PeopleSoft DOM
+ * to locate the user's classes and grant them a hyperlink that opens Google Maps directing
+ * them to their class.
+ */
+
+/**
+ * The following functions are related to accessing and updating the database via 
+ * functions located in the background.js file.
+ */
+function addClassroom(roomNumber, building, floor, door) {
+  chrome.runtime.sendMessage({ 
+    type: 'addDatabaseData', 
+    roomNumber: roomNumber,
+    building: building,
+    floor: floor,
+    door: door
+  }, (response) => {
+    if (!response) {
+      console.error('Failed to add classroom data:', response ? response.error : 'No response received');
+    }
+  });
+}
+
+
+function updateClassroom(roomNumber, updatedData) {
+  chrome.runtime.sendMessage({
+    type: 'updateDatabaseData',
+    roomNumber: roomNumber,
+    updatedData: updatedData
+  }, (response) => {
+    if (!response) {
+      console.error('Failed to update classroom data:', response.error || 'No data');
+    }
+  })
+}
+
+function deleteClassroom(roomNumber) {
+  chrome.runtime.sendMessage({
+    type: 'deleteDatabaseData',
+    roomNumber: roomNumber
+  }, (response) => {
+    if (!response) {
+      console.error('Failed to delete classroom data:', response.error || 'No data');
+    }
+  })
+}
+
+/**
+ * Returns a Google Maps URL using a classroom's room number to identify the building
+ * and it's latitdue and longitdue from the database. 
+ */
 async function getDirections(roomNumber) {
   return new Promise((resolve, reject) => {
       // Send the roomNumber to the background script to fetch classroom data
@@ -17,7 +70,6 @@ async function getDirections(roomNumber) {
                   resolve(directionsUrl); // Resolving with the directions URL
               }, function (error) {
                   console.error('Error getting location:', error);
-                  alert("Error retrieving your location. You can still view the address location on Google Maps.");
 
                   // Fallback: Open Google Maps with the classroom's latitude and longitude
                   const addressUrl = `https://www.google.com/maps?q=${latitude},${longitude}`;
@@ -31,10 +83,11 @@ async function getDirections(roomNumber) {
   });
 }
 
-// Function to inject the Google Maps link into the page (injects into extension popup for now)
-function injectMapLink(url) {
-  chrome.runtime.sendMessage({ action: 'storeLink', url: url });
-}
+/**
+ * The following functions are for DOM manipulation; adding observed classrooms
+ * to the database and creating hyperlinks to each classrooms respective
+ * buildings.
+ */
 
 function modifyText() {
   const iframe = document.querySelector("iframe");  // or other nested container
@@ -43,65 +96,73 @@ function modifyText() {
   const element = iframeDoc.querySelector("div.cx-MuiTypography-h1");
 
   if (element) {
-    console.log("Element found:", element); // Debugging log
     element.textContent = 'EXTENSION LOADED';
-  } else {
-    console.log("Target element not found."); // Debugging log
   }
 }
 
 function observeIframeForChanges() {
   const iframe = document.querySelector("iframe");
   if (!iframe) {
-    console.log("Iframe not found.");
     return;
   }
 
   const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
   if (!iframeDoc) {
-    console.log("Iframe document not loaded yet.");
     return;
   }
 
-
-
   // Start observing the body of the iframe
   observer.observe(iframeDoc.body, { childList: true, subtree: true });
-}
+} 
 
-let hasRun = false; // A flag to ensure the function runs only once
 
-function writeCoursesToDB(){
-  if (hasRun) {
-    console.log("Function has already run. Exiting.");
-    return; // Exit if the function has already run
-  }
-
-  const iframe = document.querySelector("iframe"); // Locate the iframe
+function modifyIframeElements() {
+  const iframe = document.querySelector("iframe");
   if (!iframe) {
-    console.log("Iframe not found.");
     return;
   }
 
   const iframeDoc = iframe.contentDocument || iframe.contentWindow.document; // Access the iframe's document
   if (!iframeDoc) {
-    console.log("Iframe document not loaded yet.");
     return;
   }
 
   const elements = iframeDoc.querySelectorAll("p.cx-MuiTypography-body2"); // Select all elements with the target class
   if (elements.length === 0) {
-    console.log("No target elements found in the iframe.");
     return;
   }
 
-  // Iterate through each element and extract data
-  elements.forEach((element, index) => {
-    const text = element.textContent.trim();
-    console.log(`Element ${index + 1} content: "${text}"`);
+  // Modify each element to become a hyperlink
+  elements.forEach(async (element, index) => {
+    // Check if the element already contains an anchor to avoid duplicating hyperlinks
+    if (element.querySelector("a")) {
+      return;
+    }
 
-    // Parse the text, e.g., "LA2310 CLA Priority Lec Hall" or "LA0302 CLA Priority Lec Hall"
-    const match = text.match(/^([A-Z]+)(\d+)\s+([A-Z]+)\s+(.*)$/);
+    // Parses and adds each classroom to the database
+    classroom = parseClassroom(element);
+
+    const originalText = element.textContent.trim();
+
+    const anchor = document.createElement("a");
+    try {
+      const classroom = element.textContent.slice(2,6)
+      anchor.href = await getDirections(classroom); // Set the href to Google Maps
+      anchor.target = "_blank";
+      anchor.textContent = originalText;
+  
+      // Replace the original element's content with the anchor
+      element.textContent = "";
+      element.appendChild(anchor);
+    } catch (error) {
+      console.error('Error fetching directions:', error);
+    }
+  });
+}
+
+function parseClassroom(classroom) {
+  const text = classroom.textContent.trim();
+  const match = text.match(/^([A-Z]+)(\d+)\s+([A-Z]+)\s+(.*)$/);
     if (match) {
       const building = match[1]; // e.g., "LA"
       const roomNumber = match[2]; // e.g., "2310" or "0302"
@@ -116,123 +177,18 @@ function writeCoursesToDB(){
 
       const door = parseInt(roomNumber.slice(1), 10); // Remaining digits of the room number
 
-      console.log(`Parsed data - Room: ${roomNumber}, Building: ${building}, Floor: ${floor}, Door: ${door}`);
-
       // Add the classroom to the database
       addClassroom(roomNumber, building, floor, door);
     } else {
-      console.log(`Could not parse text: "${text}"`);
+      console.error(`Could not parse text: "${text}"`);
     }
-  });
-
-  hasRun = true; // Set the flag to indicate the function has run
-}
-
-function modifyIframeElements() {
-  const iframe = document.querySelector("iframe"); // Locate the iframe
-  if (!iframe) {
-    console.log("Iframe not found.");
-    return;
-  }
-
-  const iframeDoc = iframe.contentDocument || iframe.contentWindow.document; // Access the iframe's document
-  if (!iframeDoc) {
-    console.log("Iframe document not loaded yet.");
-    return;
-  }
-
-  const elements = iframeDoc.querySelectorAll("p.cx-MuiTypography-body2"); // Select all elements with the target class
-  if (elements.length === 0) {
-    console.log("No target elements found in the iframe.");
-    return;
-  }
-
-  // Modify each element to become a hyperlink
-  elements.forEach(async (element, index) => {
-    // Check if the element already contains an anchor to avoid duplicating hyperlinks
-    if (element.querySelector("a")) {
-      return;
-    }
-
-    const originalText = element.textContent.trim();
-    console.log(`Element ${index + 1} content: "${originalText}"`);
-
-    const anchor = document.createElement("a"); // Create a new anchor element
-    try {
-      const classroom = element.textContent.slice(2,6)
-      console.log(classroom)
-      anchor.href = await getDirections(classroom); // Set the href to Google Maps
-      anchor.target = "_blank"; // Open the link in a new tab
-      anchor.textContent = originalText; // Use the original text as the link text
-  
-  
-      // Replace the original element's content with the anchor
-      element.textContent = ""; // Clear the original text
-      element.appendChild(anchor); // Add the anchor as a child
-    } catch (error) {
-      console.error('Error fetching directions:', error);
-    }
-    
-  });
-
-  console.log("Script executed successfully.");
-}
-
-
-function addClassroom(roomNumber, building, floor, door) {
-  console.log("Sending addDatabaseData message.");
-  chrome.runtime.sendMessage({ 
-    type: 'addDatabaseData', 
-    roomNumber: roomNumber,
-    building: building,
-    floor: floor,
-    door: door
-  }, (response) => {
-    if (response) {
-      console.log("Classroom added:", response.classroom);
-    } else {
-      console.error('Failed to add classroom data:', response ? response.error : 'No response received');
-    }
-  });
-}
-
-
-function updateClassroom(roomNumber, updatedData) {
-  chrome.runtime.sendMessage({
-    type: 'updateDatabaseData',
-    roomNumber: roomNumber,
-    updatedData: updatedData
-  }, (response) => {
-    if (response) {
-      console.log("Update: ", response.classroom)
-    } else {
-      console.error('Failed to update classroom data:', response.error || 'No data');
-    }
-  })
-}
-
-function deleteClassroom(roomNumber) {
-  chrome.runtime.sendMessage({
-    type: 'deleteDatabaseData',
-    roomNumber: roomNumber
-  }, (response) => {
-    if (response) {
-      console.log(`Room ${roomNumber} deleted`)
-    } else {
-      console.error('Failed to delete classroom data:', response.error || 'No data');
-    }
-  })
 }
 
 // Observe changes in the DOM
 const observer = new MutationObserver(() => {
-  console.log("DOM mutation detected, attempting to modify text."); // Debugging log
   modifyText();
-  // Call the observer and modify elements
   observeIframeForChanges();
-  writeCoursesToDB();
   modifyIframeElements();
 });
 
 observer.observe(document.body, { childList: true, subtree: true });
-console.log("Content script loaded and observer initialized."); // Debugging log

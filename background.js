@@ -1,8 +1,9 @@
 import { getClassroom, addClassroom, updateClassroom, deleteClassroom} from "./database.js";
 
-let storedLink = null;
-
-// Listen for messages from the content script
+/**
+ * Listens for messages from the content script; matches the request.
+ * Matched requests calls database functions to get, add, update, or delete data.
+ */
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
     if (request.action === 'storeLink') {
         chrome.storage.local.set({ 'storedLink': request.url });
@@ -27,15 +28,11 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
         const floor = request.floor;
         const door = request.door;
     
-        console.log(`addDatabaseData called with: ${roomNumber}, ${building}, ${floor}, ${door}`); // Debugging log
-    
         addClassroom(roomNumber, building, floor, door)
             .then((classroom) => {
-                console.log("Classroom added successfully:", classroom); // Debugging log
                 sendResponse({ classroom });
             })
             .catch((error) => {
-                console.error("Error adding classroom:", error); // Debugging log
                 sendResponse({ error: error.message });
             });
     
@@ -69,20 +66,6 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 
         return true;
     }
-});
-
-// Function to get the stored link when the popup requests it
-chrome.runtime.onConnect.addListener(function(port) {
-    port.onMessage.addListener(function(request) {
-        if (request.action === 'getLink') {
-            // Retrieve link from storage if it exists
-            chrome.storage.local.get('storedLink', function(data) {
-                if (data.storedLink) {
-                    port.postMessage({ action: 'displayLink', url: data.storedLink });
-                }
-            });
-        }
-    });
 });
 
 chrome.runtime.onInstalled.addListener(() => {
